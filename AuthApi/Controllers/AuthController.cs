@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Abstract;
 using Service.Abstract;
 using Service.Dto;
+using System.Security.Claims;
 
 namespace AuthApi.Controllers
 {
@@ -55,6 +57,19 @@ namespace AuthApi.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
+        }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var email = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst("sub")?.Value; // JWT'de sub=email ise
+
+            if (string.IsNullOrEmpty(email))
+                return Unauthorized();
+
+            await _userService.LogoutUserAsync(email);
+            return Ok(new { message = "Çıkış başarılı" });
         }
 
     }
